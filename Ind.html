@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>PDF Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #pdf-viewer {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <pdf-viewer src="path/to/your/pdf/document.pdf"></pdf-viewer>
+    <script src="pdfjs/build/pdf.js"></script>
+    <script>
+        class PDFViewer extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({mode: 'open'});
+                const container = document.createElement('div');
+                container.id = 'pdf-viewer';
+                this.shadowRoot.appendChild(container);
+            }
+
+            connectedCallback() {
+                const src = this.getAttribute('src');
+                if (src) {
+                    this.loadPDF(src);
+                }
+            }
+
+            async loadPDF(src) {
+                const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs/build/pdf.worker.js';
+                const pdf = await pdfjsLib.getDocument(src).promise;
+                const page = await pdf.getPage(1);
+                const viewport = page.getViewport({ scale: 1.5 });
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                });
+                this.shadowRoot.getElementById('pdf-viewer').appendChild(canvas);
+            }
+        }
+
+        customElements.define('pdf-viewer', PDFViewer);
+    </script>
+</body>
+</html>
